@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "ATC - Visibility Prediction",
+			"path": "."
+		},
+		{
+			"name": "EDA",
+			"path": "../EDA"
+		}
+	],
+	"settings": {}
+}
