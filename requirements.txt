@@ -1,0 +1,11 @@
+pandas
+numpy
+logging
+Scikit-Learn
+matplotlib
+seaborn
+xgboost
+sys
+typing
+setuptools
+-e .
