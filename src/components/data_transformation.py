@@ -4,7 +4,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.model_selection import train_test_split
-from src.logger import logging
+from src.logger import setup_logger  # Ensure this is correctly imported
+logger = setup_logger()
 from src.exception import CustomException
 import sys
 
@@ -23,7 +24,7 @@ def load_data(train_path, test_path):
     - y_test: Target of the test data
     """
     try:
-        logging.info("Loading data from paths.")
+        logger.info("Loading data from paths.")
         print("Loading data from paths...")  # Debugging print statement
         
         # Load the data from CSV files
@@ -41,11 +42,11 @@ def load_data(train_path, test_path):
         X_test = test_data.drop(columns=['VISIBILITY', 'DATE'])  # Adjust 'target' to your actual target column name
         y_test = test_data['VISIBILITY']  # Adjust 'target' to your actual target column name
 
-        logging.info("Data loading completed.")
+        logger.info("Data loading completed.")
         return X_train, X_test, y_train, y_test
 
     except Exception as e:
-        logging.error("Error occurred while loading data")
+        logger.error("Error occurred while loading data")
         print("Error occurred while loading data:", e)  # Debugging print statement
         raise CustomException(e, sys)
 
@@ -61,7 +62,7 @@ def drop_highly_correlated_columns(df, threshold=0.9):
     - DataFrame with highly correlated columns removed
     """
     try:
-        logging.info("Dropping highly correlated columns.")
+        logger.info("Dropping highly correlated columns.")
         print("Dropping highly correlated columns...")  # Debugging print statement
 
         # Compute the absolute correlation matrix
@@ -75,12 +76,12 @@ def drop_highly_correlated_columns(df, threshold=0.9):
         # Drop highly correlated columns
         df_dropped = df.drop(columns=to_drop)
 
-        logging.info("Dropped columns: %s", to_drop)
+        logger.info("Dropped columns: %s", to_drop)
         print("Dropped columns:", to_drop)  # Debugging print statement
         return df_dropped
 
     except Exception as e:
-        logging.error("Error occurred while dropping highly correlated columns")
+        logger.error("Error occurred while dropping highly correlated columns")
         print("Error occurred while dropping highly correlated columns:", e)  # Debugging print statement
         raise CustomException(e, sys)
 
@@ -95,18 +96,18 @@ def feature_engineering(df):
     - DataFrame with feature engineering applied
     """
     try:
-        logging.info("Starting feature engineering.")
+        logger.info("Starting feature engineering.")
         print("Starting feature engineering...")  # Debugging print statement
 
         # Drop unnecessary columns
         df = drop_highly_correlated_columns(df)
 
-        logging.info("Feature engineering completed.")
+        logger.info("Feature engineering completed.")
         print("Feature engineering completed.")  # Debugging print statement
         return df
 
     except Exception as e:
-        logging.error("Error occurred during feature engineering")
+        logger.error("Error occurred during feature engineering")
         print("Error occurred during feature engineering:", e)  # Debugging print statement
         raise CustomException(e, sys)
 
@@ -123,7 +124,7 @@ def preprocess_data(X_train, X_test, y_train):
     - Processed training and test feature data
     """
     try:
-        logging.info("Starting data preprocessing.")
+        logger.info("Starting data preprocessing.")
         print("Starting data preprocessing...")  # Debugging print statement
 
         # Define the pipeline with preprocessing steps and feature selection
@@ -140,11 +141,11 @@ def preprocess_data(X_train, X_test, y_train):
         X_test_processed = pipeline.transform(X_test)
         print("X_test_processed shape:", X_test_processed.shape)  # Debugging print statement
 
-        logging.info("Data preprocessing completed.")
+        logger.info("Data preprocessing completed.")
         return X_train_processed, X_test_processed
 
     except Exception as e:
-        logging.error("Error occurred during data preprocessing")
+        logger.error("Error occurred during data preprocessing")
         print("Error occurred during data preprocessing:", e)  # Debugging print statement
         raise CustomException(e, sys)
 
@@ -168,6 +169,6 @@ if __name__ == "__main__":
         # ...
 
     except Exception as e:
-        logging.error("Error occurred in data transformation script")
+        logger.error("Error occurred in data transformation script")
         print("Error occurred in data transformation script:", e)  # Debugging print statement
         raise CustomException(e, sys)
