@@ -1,46 +1,46 @@
+
 import pandas as pd
 import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest, f_regression
-from sklearn.model_selection import train_test_split
-from src.logger import setup_logger  # Ensure this is correctly imported
+from dataclasses import dataclass, field
+import os
+import sys
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+sys.path.insert(0, project_root)
+from src.logger import setup_logger  
 logger = setup_logger()
 from src.exception import CustomException
-import sys
+from src.utils import save_object
 
-def load_data(train_path, test_path):
-    """
-    Load training and test data from specified paths.
+@dataclass
+class DataPaths:
+    train_path: str
+    test_path: str
+    preprocessor_path: str = field(default="artifacts/preprocessor.pkl")
 
-    Parameters:
-    - train_path: Path to the training data CSV file
-    - test_path: Path to the test data CSV file
-
-    Returns:
-    - X_train: Features of the training data
-    - X_test: Features of the test data
-    - y_train: Target of the training data
-    - y_test: Target of the test data
-    """
+def load_data(paths: DataPaths):
+    # Your existing load_data function with paths.train_path and paths.test_path
+    # as inputs, and other minor adjustments as needed.
     try:
         logger.info("Loading data from paths.")
         print("Loading data from paths...")  # Debugging print statement
         
         # Load the data from CSV files
-        train_data = pd.read_csv(train_path)
-        test_data = pd.read_csv(test_path)
+        train_data = pd.read_csv(paths.train_path)
+        test_data = pd.read_csv(paths.test_path)
         
         # Print the first few rows to verify
         print("Train Data Head:\n", train_data.head())
         print("Test Data Head:\n", test_data.head())
         
         # Drop the target column and DATE column from features
-        X_train = train_data.drop(columns=['VISIBILITY', 'DATE'])  # Adjust 'target' to your actual target column name
-        y_train = train_data['VISIBILITY']  # Adjust 'target' to your actual target column name
+        X_train = train_data.drop(columns=['VISIBILITY', 'DATE'])  
+        y_train = train_data['VISIBILITY']  
 
-        X_test = test_data.drop(columns=['VISIBILITY', 'DATE'])  # Adjust 'target' to your actual target column name
-        y_test = test_data['VISIBILITY']  # Adjust 'target' to your actual target column name
+        X_test = test_data.drop(columns=['VISIBILITY', 'DATE'])  
+        y_test = test_data['VISIBILITY']  
 
         logger.info("Data loading completed.")
         return X_train, X_test, y_train, y_test
@@ -50,6 +50,7 @@ def load_data(train_path, test_path):
         print("Error occurred while loading data:", e)  # Debugging print statement
         raise CustomException(e, sys)
 
+# Drop correlated columns function
 def drop_highly_correlated_columns(df, threshold=0.9):
     """
     Drop columns from the dataframe that are highly correlated with each other.
@@ -110,15 +111,17 @@ def feature_engineering(df):
         logger.error("Error occurred during feature engineering")
         print("Error occurred during feature engineering:", e)  # Debugging print statement
         raise CustomException(e, sys)
+    
 
-def preprocess_data(X_train, X_test, y_train):
+def preprocess_data(X_train, X_test, y_train, preprocessor_path):
     """
-    Apply preprocessing to the training and test data.
+    Apply preprocessing to the training and test data and save the preprocessor.
 
     Parameters:
     - X_train: Training feature data
     - X_test: Test feature data
     - y_train: Training target data
+    - preprocessor_path: Path where the preprocessor pipeline will be saved
 
     Returns:
     - Processed training and test feature data
@@ -141,6 +144,10 @@ def preprocess_data(X_train, X_test, y_train):
         X_test_processed = pipeline.transform(X_test)
         print("X_test_processed shape:", X_test_processed.shape)  # Debugging print statement
 
+        # Save the pipeline as a pickle file
+        save_object(pipeline, preprocessor_path)
+        logger.info(f"Preprocessor pipeline saved at {preprocessor_path}")
+
         logger.info("Data preprocessing completed.")
         return X_train_processed, X_test_processed
 
@@ -151,15 +158,17 @@ def preprocess_data(X_train, X_test, y_train):
 
 if __name__ == "__main__":
     try:
-        # Define file paths
-        train_path = 'artifacts/train.csv'  # Update with your path
-        test_path = 'artifacts/test.csv'    # Update with your path
+        # Initialize data paths with dataclass
+        paths = DataPaths(
+            train_path='artifacts/train.csv',  # Update with your actual path
+            test_path='artifacts/test.csv',    # Update with your actual path
+        )
 
         # Load and preprocess data
-        X_train, X_test, y_train, y_test = load_data(train_path, test_path)
+        X_train, X_test, y_train, y_test = load_data(paths)
         X_train = feature_engineering(X_train)
         X_test = feature_engineering(X_test)
-        X_train_processed, X_test_processed = preprocess_data(X_train, X_test, y_train)
+        X_train_processed, X_test_processed = preprocess_data(X_train, X_test, y_train, paths.preprocessor_path)
 
         # Print the final processed data shapes
         print("X_train_processed shape:", X_train_processed.shape)

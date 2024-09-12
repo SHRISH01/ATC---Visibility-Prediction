@@ -7,4 +7,5 @@ seaborn
 typing
 setuptools
 dataclass
+dill
 -e .
