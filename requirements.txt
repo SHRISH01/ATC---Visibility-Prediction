@@ -4,7 +4,7 @@ logging
 Scikit-Learn
 matplotlib
 seaborn
-xgboost
 typing
 setuptools
+dataclass
 -e .
