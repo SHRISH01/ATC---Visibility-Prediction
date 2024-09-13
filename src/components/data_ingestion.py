@@ -1,11 +1,20 @@
 import sys
 import os
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+sys.path.insert(0, project_root)
+
 from src.logger import setup_logger  # Ensure this is correctly imported
 logger = setup_logger()
 from src.exception import CustomException  # Ensure this is correctly imported
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from dataclasses import dataclass
+
+from src.components.data_transformation import DataTransformation
+from src.components.data_trainer import ModelTrainer
+from src.utils import save_object
+
 
 # Initialize the Data Ingestion Configuration
 @dataclass
@@ -60,7 +69,30 @@ class DataIngestion:
 
 # Example usage
 if __name__ == "__main__":
+    # Data Ingestion:
+
     ingestion = DataIngestion()
     train_path, test_path = ingestion.initiate_data_ingestion()
     print(f"Train data saved at: {train_path}")
     print(f"Test data saved at: {test_path}")
+
+    # Data Transformation:
+
+    # Assuming DataIngestion has a method for data transformation
+    data_transformation = DataTransformation()
+    # Unpack all returned values correctly
+    transformed_train, transformed_test, y_train, y_test, preprocessor_path = data_transformation.initiate_data_transformation(train_path, test_path)
+    # Example prints to verify outputs
+    print("Transformed Train Data Shape:", transformed_train.shape)
+    print("Transformed Test Data Shape:", transformed_test.shape)
+    print("Train Labels Shape:", y_train.shape)
+    print("Test Labels Shape:", y_test.shape)
+    print("Preprocessor saved at:", preprocessor_path)
+
+    # Model Training:
+
+    # Assuming DataIngestion has a method for model training
+    trnr = ModelTrainer()
+    r2_score = trnr.initiate_model_trainer(transformed_train, transformed_test)
+    print(r2_score)
+

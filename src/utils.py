@@ -1,7 +1,12 @@
 import dill
 import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.logger import setup_logger  
+from src.exception import CustomException
 logger = setup_logger()
+from sklearn.metrics import r2_score
+from sklearn.model_selection import GridSearchCV
 
 def save_object(obj, file_path):
     """
@@ -41,3 +46,35 @@ def load_object(file_path):
     except Exception as e:
         logger.error(f"Error occurred while loading object from {file_path}: {e}")
         raise
+
+def evaluate_model(X_train, y_train, X_valid, y_valid, models, params):
+    try:
+        report = {}
+        print("Training Shape:", X_train.shape)
+        print("Validation Shape:", X_valid.shape)
+
+        for i in range(len(models)):
+            model = list(models.values())[i]
+            param = params[list(models.keys())[i]]
+
+            gs = GridSearchCV(model, param, cv=3)
+            gs.fit(X_train, y_train)
+
+            model.set_params(**gs.best_params_)
+            model.fit(X_train, y_train)
+
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_valid)
+
+            model_train_score = r2_score(y_train, y_train_pred)
+            model_test_score = r2_score(y_valid, y_test_pred)
+
+            report[list(models.keys())[i]] = model_test_score
+
+        return report
+    except Exception as e:
+        logger.error(f"Error occurred while evaluating model: {e}")
+        raise CustomException(e, sys)
+
+
+

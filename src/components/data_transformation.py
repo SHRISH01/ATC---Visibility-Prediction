@@ -1,181 +1,157 @@
-
-import pandas as pd
+import sys
+import os
 import numpy as np
+import pandas as pd
+from dataclasses import dataclass
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest, f_regression
-from dataclasses import dataclass, field
-import os
-import sys
+
+# Setting project root and updating the system path to import necessary modules.
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 sys.path.insert(0, project_root)
-from src.logger import setup_logger  
-logger = setup_logger()
+
 from src.exception import CustomException
+from src.logger import setup_logger
 from src.utils import save_object
 
+logger = setup_logger()
+
 @dataclass
-class DataPaths:
-    train_path: str
-    test_path: str
-    preprocessor_path: str = field(default="artifacts/preprocessor.pkl")
+class DataTransformationConfig:
+    preprocessor_obj_file_path: str = os.path.join("artifacts", "preprocessor.pkl")
 
-def load_data(paths: DataPaths):
-    # Your existing load_data function with paths.train_path and paths.test_path
-    # as inputs, and other minor adjustments as needed.
-    try:
-        logger.info("Loading data from paths.")
-        print("Loading data from paths...")  # Debugging print statement
-        
-        # Load the data from CSV files
-        train_data = pd.read_csv(paths.train_path)
-        test_data = pd.read_csv(paths.test_path)
-        
-        # Print the first few rows to verify
-        print("Train Data Head:\n", train_data.head())
-        print("Test Data Head:\n", test_data.head())
-        
-        # Drop the target column and DATE column from features
-        X_train = train_data.drop(columns=['VISIBILITY', 'DATE'])  
-        y_train = train_data['VISIBILITY']  
+class DataTransformation:
+    def __init__(self):
+        self.data_transformation_config = DataTransformationConfig()
 
-        X_test = test_data.drop(columns=['VISIBILITY', 'DATE'])  
-        y_test = test_data['VISIBILITY']  
+    def load_data(self, train_path: str, test_path: str):
+        """Load training and test data from specified paths."""
+        try:
+            logger.info("Loading data from paths.")
+            print("Loading data from paths...")  # Debugging print statement
 
-        logger.info("Data loading completed.")
-        return X_train, X_test, y_train, y_test
+            train_data = pd.read_csv(train_path)
+            test_data = pd.read_csv(test_path)
 
-    except Exception as e:
-        logger.error("Error occurred while loading data")
-        print("Error occurred while loading data:", e)  # Debugging print statement
-        raise CustomException(e, sys)
+            print("Train Data Head:\n", train_data.head())
+            print("Test Data Head:\n", test_data.head())
 
-# Drop correlated columns function
-def drop_highly_correlated_columns(df, threshold=0.9):
-    """
-    Drop columns from the dataframe that are highly correlated with each other.
+            X_train = train_data.drop(columns=['VISIBILITY', 'DATE'])
+            y_train = train_data['VISIBILITY']
 
-    Parameters:
-    - df: The dataframe to process
-    - threshold: Correlation coefficient above which columns will be dropped
+            X_test = test_data.drop(columns=['VISIBILITY', 'DATE'])
+            y_test = test_data['VISIBILITY']
 
-    Returns:
-    - DataFrame with highly correlated columns removed
-    """
-    try:
-        logger.info("Dropping highly correlated columns.")
-        print("Dropping highly correlated columns...")  # Debugging print statement
+            logger.info("Data loading completed.")
+            return X_train, X_test, y_train, y_test
 
-        # Compute the absolute correlation matrix
-        corr_matrix = df.corr().abs()
-        print("Correlation Matrix:\n", corr_matrix)  # Debugging print statement
+        except Exception as e:
+            logger.error("Error occurred while loading data")
+            print("Error occurred while loading data:", e)  # Debugging print statement
+            raise CustomException(e, sys)
 
-        # Create a mask to identify highly correlated columns
-        upper_tri = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
-        to_drop = [column for column in upper_tri.columns if any(upper_tri[column] > threshold)]
+    def drop_highly_correlated_columns(self, df, threshold=0.9):
+        """Drop columns that are highly correlated with each other based on the given threshold."""
+        try:
+            logger.info("Dropping highly correlated columns.")
+            print("Dropping highly correlated columns...")  # Debugging print statement
 
-        # Drop highly correlated columns
-        df_dropped = df.drop(columns=to_drop)
+            corr_matrix = df.corr().abs()
+            print("Correlation Matrix:\n", corr_matrix)  # Debugging print statement
 
-        logger.info("Dropped columns: %s", to_drop)
-        print("Dropped columns:", to_drop)  # Debugging print statement
-        return df_dropped
+            upper_tri = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+            to_drop = [column for column in upper_tri.columns if any(upper_tri[column] > threshold)]
 
-    except Exception as e:
-        logger.error("Error occurred while dropping highly correlated columns")
-        print("Error occurred while dropping highly correlated columns:", e)  # Debugging print statement
-        raise CustomException(e, sys)
+            df_dropped = df.drop(columns=to_drop)
 
-def feature_engineering(df):
-    """
-    Perform feature engineering on the dataframe.
+            logger.info("Dropped columns: %s", to_drop)
+            print("Dropped columns:", to_drop)  # Debugging print statement
+            return df_dropped
 
-    Parameters:
-    - df: The dataframe to process
+        except Exception as e:
+            logger.error("Error occurred while dropping highly correlated columns")
+            print("Error occurred while dropping highly correlated columns:", e)  # Debugging print statement
+            raise CustomException(e, sys)
 
-    Returns:
-    - DataFrame with feature engineering applied
-    """
-    try:
-        logger.info("Starting feature engineering.")
-        print("Starting feature engineering...")  # Debugging print statement
+    def feature_engineering(self, df):
+        """Perform feature engineering, including dropping highly correlated columns."""
+        try:
+            logger.info("Starting feature engineering.")
+            print("Starting feature engineering...")  # Debugging print statement
 
-        # Drop unnecessary columns
-        df = drop_highly_correlated_columns(df)
+            df = self.drop_highly_correlated_columns(df)
 
-        logger.info("Feature engineering completed.")
-        print("Feature engineering completed.")  # Debugging print statement
-        return df
+            logger.info("Feature engineering completed.")
+            print("Feature engineering completed.")  # Debugging print statement
+            return df
 
-    except Exception as e:
-        logger.error("Error occurred during feature engineering")
-        print("Error occurred during feature engineering:", e)  # Debugging print statement
-        raise CustomException(e, sys)
+        except Exception as e:
+            logger.error("Error occurred during feature engineering")
+            print("Error occurred during feature engineering:", e)  # Debugging print statement
+            raise CustomException(e, sys)
     
+    def preprocess_data(self, X_train, X_test, y_train):
+        """Preprocess the data using a pipeline of scaling and feature selection."""
+        try:
+            logger.info("Starting data preprocessing.")
+            print("Starting data preprocessing...")  # Debugging print statement
 
-def preprocess_data(X_train, X_test, y_train, preprocessor_path):
-    """
-    Apply preprocessing to the training and test data and save the preprocessor.
+            pipeline = Pipeline([
+                ('scaler', StandardScaler()),
+                ('feature_selection', SelectKBest(score_func=f_regression, k='all'))
+            ])
 
-    Parameters:
-    - X_train: Training feature data
-    - X_test: Test feature data
-    - y_train: Training target data
-    - preprocessor_path: Path where the preprocessor pipeline will be saved
+            X_train_processed = pipeline.fit_transform(X_train, y_train)
+            print("X_train_processed shape:", X_train_processed.shape)  # Debugging print statement
 
-    Returns:
-    - Processed training and test feature data
-    """
-    try:
-        logger.info("Starting data preprocessing.")
-        print("Starting data preprocessing...")  # Debugging print statement
+            X_test_processed = pipeline.transform(X_test)
+            print("X_test_processed shape:", X_test_processed.shape)  # Debugging print statement
 
-        # Define the pipeline with preprocessing steps and feature selection
-        pipeline = Pipeline([
-            ('scaler', StandardScaler()),  # Example preprocessing step
-            ('feature_selection', SelectKBest(score_func=f_regression, k='all'))  # Adjust k as needed
-        ])
+            save_object(pipeline, self.data_transformation_config.preprocessor_obj_file_path)
+            logger.info(f"Preprocessor pipeline saved at {self.data_transformation_config.preprocessor_obj_file_path}")
 
-        # Fit the pipeline on training data
-        X_train_processed = pipeline.fit_transform(X_train, y_train)  # Pass y_train here
-        print("X_train_processed shape:", X_train_processed.shape)  # Debugging print statement
+            logger.info("Data preprocessing completed.")
+            return X_train_processed, X_test_processed
 
-        # Transform the test data
-        X_test_processed = pipeline.transform(X_test)
-        print("X_test_processed shape:", X_test_processed.shape)  # Debugging print statement
+        except Exception as e:
+            logger.error("Error occurred during data preprocessing")
+            print("Error occurred during data preprocessing:", e)  # Debugging print statement
+            raise CustomException(e, sys)
 
-        # Save the pipeline as a pickle file
-        save_object(pipeline, preprocessor_path)
-        logger.info(f"Preprocessor pipeline saved at {preprocessor_path}")
+    def initiate_data_transformation(self, train_path: str, test_path: str):
+        """Initiate the data transformation process with the given train and test data paths."""
+        try:
+            X_train, X_test, y_train, y_test = self.load_data(train_path, test_path)
+            X_train = self.feature_engineering(X_train)
+            X_test = self.feature_engineering(X_test)
+            X_train_processed, X_test_processed = self.preprocess_data(X_train, X_test, y_train)
 
-        logger.info("Data preprocessing completed.")
-        return X_train_processed, X_test_processed
+            print("X_train_processed shape:", X_train_processed.shape)
+            print("X_test_processed shape:", X_test_processed.shape)
 
-    except Exception as e:
-        logger.error("Error occurred during data preprocessing")
-        print("Error occurred during data preprocessing:", e)  # Debugging print statement
-        raise CustomException(e, sys)
+            return (
+                X_train_processed,
+                X_test_processed,
+                y_train,
+                y_test,
+                self.data_transformation_config.preprocessor_obj_file_path
+            )
+
+        except Exception as e:
+            logger.error("Error occurred in data transformation process")
+            print("Error occurred in data transformation process:", e)  # Debugging print statement
+            raise CustomException(e, sys)
 
 if __name__ == "__main__":
     try:
-        # Initialize data paths with dataclass
-        paths = DataPaths(
-            train_path='artifacts/train.csv',  # Update with your actual path
-            test_path='artifacts/test.csv',    # Update with your actual path
-        )
+        # Specify paths for train and test data
+        train_path = "artifacts/train.csv"
+        test_path = "artifacts/test.csv"
 
-        # Load and preprocess data
-        X_train, X_test, y_train, y_test = load_data(paths)
-        X_train = feature_engineering(X_train)
-        X_test = feature_engineering(X_test)
-        X_train_processed, X_test_processed = preprocess_data(X_train, X_test, y_train, paths.preprocessor_path)
-
-        # Print the final processed data shapes
-        print("X_train_processed shape:", X_train_processed.shape)
-        print("X_test_processed shape:", X_test_processed.shape)
-
-        # Proceed with the next steps (e.g., model training)
-        # ...
+        data_transformation = DataTransformation()
+        # Pass paths as arguments to the initiate_data_transformation method
+        data_transformation.initiate_data_transformation(train_path, test_path) 
 
     except Exception as e:
         logger.error("Error occurred in data transformation script")
