@@ -39,21 +39,13 @@ class ModelTrainer:
             )
 
             models = {
-                "GradientBoostingRegressor": GradientBoostingRegressor()
-            }
-            params = {
-                "GradientBoostingRegressor": {
-                    'learning_rate': [0.01, 0.1, 0.2],
-                    'max_depth':[5],
-                    'min_samples_split':[10],
-                    'n_estimators':[300],
-                    'subsample':[0.8]
-                }
+                "DecisionTreeRegressor":GradientBoostingRegressor(max_depth=5, min_samples_split=10, n_estimators=300,
+                          subsample=0.8)
             }
 
             model_report: dict = evaluate_model(
                 X_train=X_train, y_train=y_train, X_valid=X_valid, y_valid=y_valid,
-                models=models, params=params
+                models=models
             )
 
             # To get the best model score from the model dict:

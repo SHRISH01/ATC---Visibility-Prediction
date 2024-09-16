@@ -7,6 +7,7 @@ from src.exception import CustomException
 logger = setup_logger()
 from sklearn.metrics import r2_score
 from sklearn.model_selection import GridSearchCV
+import numpy as np
 
 def save_object(obj, file_path):
     """
@@ -47,7 +48,7 @@ def load_object(file_path):
         logger.error(f"Error occurred while loading object from {file_path}: {e}")
         raise
 
-def evaluate_model(X_train, y_train, X_valid, y_valid, models, params):
+def evaluate_model(X_train, y_train, X_valid, y_valid, models):
     try:
         report = {}
         print("Training Shape:", X_train.shape)
@@ -55,12 +56,6 @@ def evaluate_model(X_train, y_train, X_valid, y_valid, models, params):
 
         for i in range(len(models)):
             model = list(models.values())[i]
-            param = params[list(models.keys())[i]]
-
-            gs = GridSearchCV(model, param, cv=3)
-            gs.fit(X_train, y_train)
-
-            model.set_params(**gs.best_params_)
             model.fit(X_train, y_train)
 
             y_train_pred = model.predict(X_train)
@@ -72,9 +67,18 @@ def evaluate_model(X_train, y_train, X_valid, y_valid, models, params):
             report[list(models.keys())[i]] = model_test_score
 
         return report
+
     except Exception as e:
-        logger.error(f"Error occurred while evaluating model: {e}")
         raise CustomException(e, sys)
+    
+    def load_object(file_path):
+        try:
+            with open(file_path,"rb") as file_obj:
+                return dill.load(file_obj)
+                
+        except Exception as e :
+            raise CustomException(e, sys)
+
 
 
 

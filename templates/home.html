@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Result</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Climate Visibility Prediction</h1>
+        
+        <form method="POST" action="/predictdata" class="mt-4">
+            <div class="mb-3">
+                <label for="DRYBULBTEMPF" class="form-label">Dew Point Temperature (F)</label>
+                <input type="number" step="any" name="DRYBULBTEMPF" class="form-control" id="DRYBULBTEMPF" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="RelativeHumidity" class="form-label">Relative Humidity (%)</label>
+                <input type="number" step="any" name="RelativeHumidity" class="form-control" id="RelativeHumidity" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="WindSpeedMPH" class="form-label">Wind Speed (MPH)</label>
+                <input type="number" step="any" name="WindSpeedMPH" class="form-control" id="WindSpeedMPH" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="WindDirection" class="form-label">Wind Direction (Degrees)</label>
+                <input type="number" step="any" name="WindDirection" class="form-control" id="WindDirection" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="StationPressure" class="form-label">Station Pressure (inHg)</label>
+                <input type="number" step="any" name="StationPressure" class="form-control" id="StationPressure" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="Precip" class="form-label">Precipitation (inches)</label>
+                <input type="number" step="any" name="Precip" class="form-control" id="Precip" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Predict</button>
+        </form>
+
+        {% if results %}
+        <div class="mt-4 alert alert-success" role="alert">
+            <h4 class="alert-heading">Prediction Result:</h4>
+            <p>The predicted visibility is: <strong>{{ results }}</strong></p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

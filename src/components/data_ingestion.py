@@ -95,4 +95,3 @@ if __name__ == "__main__":
     trnr = ModelTrainer()
     r2_score = trnr.initiate_model_trainer(transformed_train, transformed_test)
     print(r2_score)
-
